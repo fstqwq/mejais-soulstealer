@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <form action="/query" method="POST">
+        <label for="cf">Enter Your CF ID:</label><br>
+        <input type="text" name="cf" id="cf"><br>
+        <label for="at">Enter Your AT ID:</label><br>
+        <input type="text" name="at" id="at"><br>
+        <button class="btn btn-primary" type="submit">Submit</button>
+    </form>
+{% endblock %}
+
