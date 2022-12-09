@@ -1,0 +1,106 @@
+:root {
+  --blue: #5e72e4;
+  --indigo: #5603ad;
+  --purple: #8965e0;
+  --pink: #f3a4b5;
+  --red: #f5365c;
+  --orange: #fb6340;
+  --yellow: #ffd600;
+  --green: #2dce89;
+  --teal: #11cdef;
+  --cyan: #2bffc6;
+  --white: #fff;
+  --gray: #8898aa;
+  --gray-dark: #32325d;
+  --light: #d4ceda; /* ced4da */
+  --lighter: #ece9ef; /* e9ecef */
+  --bg: #f9f6fc; /* f6f9fc*/
+  --primary: #370D73; /* --blue */
+  --secondary: #f5f4f7; /* f4f5f7 */
+  /* mejai colors */
+  --mejai-pink: #BF264F;
+  --mejai-violet: #631FA6;
+  --mejai-purple: #370D73;
+  --mejai-navy: #150140;
+  --mejai-yellow: #F2DEA0;
+  
+  --success: #2dce89;
+  --info: #11cdef;
+  --warning: #fb6340;
+  --danger: #f5365c;
+  --light: #adb5bd;
+  --dark: #212529;
+  --default: #172b4d;
+  --white: #fff;
+  --neutral: #fff;
+  --darker: black;
+  --breakpoint-xs: 0;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.submission {
+	background-color: rgba(255, 255, 255, 0.5);
+	border: 0.0625rem solid rgba(0, 0, 0, 0.05);
+}
+.rejected-submission {
+	color: #f5365c !important;
+	font-weight: bold;
+	text-align: center;
+	margin: auto;
+}
+.accepted-submission {
+	color: #1f8f5f !important;
+	font-weight: bold;
+	text-align: center;
+	margin: auto;
+}
+.no-submission {
+	color: var(--bg) !important;
+	font-weight: bold;
+	text-align: center;
+	margin: auto;
+}
+.participantOUT_OF_COMPETITION, .participantVIRTUAL
+{
+	font-weight:700; color: var(--blue);
+}
+.participantPRACTICE
+{
+	font-weight:700; color: var(--mejai-navy);
+}
+.accepted_problem, .attempted_problem, .new_problem
+{
+	padding:2px 2px; width: 7%;
+	border: 0.0625rem solid rgba(0, 0, 0, 0.125);
+}
+.accepted_problem {
+	background-color: #d4edc9 !important;
+}
+.attempted_problem {
+	background-color: #ffe3e3 !important;
+}
+.new_problem {
+	background-color: #ffffff !important;
+}
+.contestAK {
+	background-color: #d4edc9 !important;
+}
+.contestOPEN {
+	background-color: rgb(221, 238, 255) !important;
+}
+.contestRJ {
+	background-color: #ffe3e3 !important;
+}
+.contestNEW {
+	background-color: #ffffff !important;
+}
+.card-participant {
+	background-color: var(--bg);
+}
+.card-concered {
+	background-color: var(--mejai-yellow) !important;
+}

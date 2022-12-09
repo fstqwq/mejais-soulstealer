@@ -1,6 +1,99 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Submissions</h1>
-    {{ table_html|safe }}
+<!-- Header -->
+<!-- <div class="header bg-gradient-primary pb-8 pt-5 pt-md-8"> -->
+        <!-- Card stats -->
+        <div class="row">
+          <div class="col-xl-12 mb-5 mb-xl-0">
+            <div class="card shadow">
+              <div class="card-header border-0">
+                <div class="row align-items-center">
+                  <div class="col">
+                    <h3 class="mb-0">Contest Standings: <span class="{{rated_color[concerned]}}">{{concerned}}</span> </h3>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="accordion" id="accordionExample" data-accordion-auto-fold="false">
+                {% for contest in contests %}
+                  <div class="card">    
+                    <div class="card" style="padding:0px 0px; flex-direction: row;">
+                        <div class="card" id="heading-{{ contest.id }}" style="padding:0px 0px; width: 30%;">
+                            <button class="btn btn-link contest{{contest.concerned_status}}" type="button" data-toggle="collapse" data-target="#collapse-{{ contest.id }}" aria-expanded="true" aria-controls="collapse-{{ contest.id }}">
+                            {{ contest.name }}
+                            </button>
+                        </div>
+                        {% if contest.query_status != "OK" %}
+                            <div class="card" id="heading-{{ contest.id }}" style="padding:0px 0px; width: 70%; ">
+                                <p>{{ contest.query_status}}</p>
+                            </div>
+                        {% else %}
+                            {% for problem in contest.query_result['problems'] %}
+                                <div class="card {{'accepted_problem' if problem['concerned_accepted'] else 'attempted_problem' if problem['concerned_attemped'] else 'new_problem'}}" id="heading-{{ contest.id }}-{{ problem.index }}">
+                                    <p class="{{problem.rating | color_from_rating}}" style="text-align: center; margin: auto; font-weight: 500 !important;">{{problem.index}}</p>
+                                </div>
+                            {% endfor %}
+                        {% endif %} 
+                    </div>
+              
+                    <div id="collapse-{{ contest.id }}" class="collapse" aria-labelledby="heading-{{ contest.id }}">
+                    <!-- data-parent="#accordionExample" -->
+                      <div class="card-body" style="padding:0px 0px;">
+                        {% if contest.query_status != "OK" %}
+                            
+                        {% else %}
+                                    {% for row in contest.query_result['rows'] %}
+                                        <div class="card
+                                        card-participant
+                                        {% for m in row['party']['members'] %}
+                                        {% if m['handle'] == concerned %}
+                                        card-concered
+                                        {% endif %}
+                                        {% endfor %}"
+                                        style="padding:0px 0px; flex-direction: row;">
+                                            {% if row['party']['participantType'] == 'CONTESTANT' %}
+                                                <span style="padding:5px 5px; width: 7%; text-align: center; color: var(--mejai-navy); font-weight: 600;">{{ row['rank'] }}</span>
+                                            {% elif row['party']['participantType'] == 'VIRTUAL' or row['party']['participantType'] == 'OUT_OF_COMPETITION' %}
+                                                <span style="padding:5px 5px; width: 7%; text-align: center; color: var(--blue); font-weight: 600;">{{ row['rank'] }}<sup>#</sup></span>
+                                            {% else %}
+                                                <span class="text-dark" style="padding:5px 5px; width: 7%; text-align: center; font-weight: 600;">*</span>
+                                            {% endif %}
+                                            <div class="card submission" style="padding:5px 5px; width: 23%; text-align: left; display:inline; vertical-align: middle;flex-direction: row;"> 
+                                                {% for m in row['party']['members']%}
+                                                    <span class="{{rated_color[m['handle']]}}">{{ m['handle'] }}</span>
+                                                {% endfor %}
+                                                {% if row['party']['participantType'] != 'CONTESTANT' %}
+                                                <span class="participant{{row['party']['participantType']}}"><sub>{{row['party']['participantType']}}</sub></span>
+                                                {% endif %}
+                                                </div>
+                                                {% for problem in row['problemResults'] %}
+                                                <div class="card submission" style="padding:0px 0px; width: 7%;">
+                                                    {% if problem['points'] > 0 %}
+                                                    <p class="accepted-submission">
+                                                        +{% if problem['rejectedAttemptCount'] > 0 %}{{ problem['rejectedAttemptCount'] }}{% endif%}</p>
+                                                    {% else %}
+                                                    {% if problem['rejectedAttemptCount'] > 0 %}
+                                                        <p class="rejected-submission">-{{ problem['rejectedAttemptCount'] }}</p>
+                                                    {% else %}
+                                                        <p class="no-submission">-</p>
+                                                    {% endif %}
+                                                    {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endfor %}
+                        {% endif %} 
+                      </div>
+                    </div>
+                  </div>
+                {% endfor %}
+              </div>              
+
+
+            </div>
+          </div>
+        </div>
+<!-- </div> -->
+  
 {% endblock %}
