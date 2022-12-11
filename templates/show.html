@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Header -->
+<!-- <div class="header bg-gradient-primary pb-8 pt-5 pt-md-8"> -->
+<!-- Card stats -->
+<div class="row">
+    <div class="col-xl-12 mb-5 mb-xl-0">
+        <div class="card shadow">
+            <div class="card-header border-0">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="mb-0">Contest Standings: {{data.rendered_handles[data.concerned] | safe}}</h3>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion" id="accordionExample" data-accordion-auto-fold="false">
+                {% for contest in data.contests %}
+                <div class="card">
+                    <div class="card contest-holder" style="padding:0px 0px; flex-direction: row;">
+                        <div class="card card-contest-name contest{{contest.concerned_status}}" id="heading-{{ contest.id }}">
+                            <button class="btn btn-link" type="button" data-toggle="collapse"
+                                data-target="#collapse-{{ contest.id }}" aria-expanded="true"
+                                aria-controls="collapse-{{ contest.id }}"
+                                style="background-color: rgba(0, 0, 0, 0); overflow: visible;">
+                                {{ contest.name }}
+                            </button>
+                        </div>
+                        {% for problem in contest.problems %}
+                        <button class="card problem-{{problem.concerned}} btn btn-link" type="button" onclick="window.open('https://codeforces.com/contest/{{contest.id}}/problem/{{ problem.index }}')" style="padding: 0px 0px; margin: 0px 0px;">
+                            <span class="{{problem.rating | color_from_rating}}"
+                                style="text-align: center; margin: auto; font-weight: 500 !important;">{{
+                                    problem.index
+                                }}</span>
+                            </button>
+                        {% endfor %}
+                    </div>
+
+                    <div id="collapse-{{ contest.id }}" class="collapse" aria-labelledby="heading-{{ contest.id }}" data-parent="#accordionExample">
+                        <div class="card-body" style="padding:0px 0px;">
+                            {% for line in contest.standings %}
+                            <div class="card
+                                        card-participant
+                                        {% if line.is_concerned %}
+                                            card-concered
+                                        {% endif %}" style="padding:0px 0px; flex-direction: row;">
+                                <div class="card card-rank participant{{line.type}}">
+                                    <span style="margin: auto">{{ line.rank if
+                                        line.type == 'CONTESTANT' else (line.rank | string) +
+                                        ("<sup>#</sup>" | safe) if (line.type == 'VIRTUAL' or
+                                        line.type == 'OUT_OF_COMPETITION') else "*" }}</span>
+                                </div>
+                                <div class="card card-name">
+                                    <span style="margin:auto">{{ ','.join(line.members) | safe}}{%
+                                        if line.type != 'CONTESTANT'
+                                    %}</span><span
+                                        class="participant{{line.type}} participant_notation"><sub>{{line.type}}</sub></span>
+                                    {% endif %}
+                                </div>
+                                <div class="card card-cell participant{{line.type}}"><span style="margin: auto; font-weight: 500 !important;">{{ line.points | int }}</span></div>
+                                {% for problem in line.problem_results %}
+                                <div class="card card-cell">
+                                    <span class="{{problem[0]}}-submission">{{problem[1]}}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+
+        </div>
+    </div>
+</div>
+<!-- </div> -->
+
+{% endblock %}

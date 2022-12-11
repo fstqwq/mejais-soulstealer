@@ -42,49 +42,76 @@
   --font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
   --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
-.submission {
-	background-color: rgba(255, 255, 255, 0.5);
-	border: 0.0625rem solid rgba(0, 0, 0, 0.05);
+.accepted-submission, .rejected-submission, .no-submission {
+	font-weight: bold;
+	text-align: center;
+	margin: auto;
 }
 .rejected-submission {
 	color: #f5365c !important;
-	font-weight: bold;
-	text-align: center;
-	margin: auto;
 }
 .accepted-submission {
 	color: #1f8f5f !important;
-	font-weight: bold;
-	text-align: center;
-	margin: auto;
 }
 .no-submission {
-	color: var(--bg) !important;
-	font-weight: bold;
-	text-align: center;
-	margin: auto;
+	color: var(--lighter) !important;
 }
 .participantOUT_OF_COMPETITION, .participantVIRTUAL
 {
 	font-weight:700; color: var(--blue);
 }
+.participantCONTESTANT
+{
+	font-weight:700; color: var(--mejai-navy);
+}
 .participantPRACTICE
 {
 	font-weight:700; color: var(--mejai-navy);
 }
-.accepted_problem, .attempted_problem, .new_problem
-{
-	padding:2px 2px; width: 7%;
-	border: 0.0625rem solid rgba(0, 0, 0, 0.125);
+.participant_notation{
+  font-size: 60% !important;
+  text-align: left;
 }
-.accepted_problem {
+.problem-accepted, .problem-rejected, .problem-no, .problem-accepted-upsolve, .card-cell {
+  width: 7%;
+}
+.card-rank {
+  width: 5%;
+}
+.card-name {
+  width: 18%;
+}
+.card-contest-name {
+  width: 30%;
+}
+.problem-accepted, .problem-rejected, .problem-no, .problem-accepted-upsolve
+{
+  border: 0.0625rem solid rgba(0, 0, 0, 0.125);
+	padding:0px 0px;
+  box-shadow: none;
+}
+.problem-accepted:hover, .problem-rejected:hover, .problem-no:hover, .problem-accepted-upsolve:hover{
+	filter: brightness(97%);
+}
+.problem-accepted {
 	background-color: #d4edc9 !important;
 }
-.attempted_problem {
+.problem-accepted-upsolve {
+	background: linear-gradient(
+    315deg,
+    var(--mejai-yellow) 0%,
+    var(--mejai-yellow) 15%,
+    #d4edc9 15%,
+    #d4edc9 100%
+  );}
+.problem-rejected {
 	background-color: #ffe3e3 !important;
 }
-.new_problem {
+.problem-no {
 	background-color: #ffffff !important;
+}
+.contest-holder {
+	background-color: var(--secondary) !important;
 }
 .contestAK {
 	background-color: #d4edc9 !important;
@@ -96,11 +123,34 @@
 	background-color: #ffe3e3 !important;
 }
 .contestNEW {
-	background-color: #ffffff !important;
+	background-color: #f3f3f3 !important;
 }
 .card-participant {
-	background-color: var(--bg);
+	background-color: #faf9ff;
 }
 .card-concered {
 	background-color: var(--mejai-yellow) !important;
+}
+.card-name, .card-cell {
+	background-color: rgba(255, 255, 255, 0.5);
+	border: 0.0625rem solid rgba(0, 0, 0, 0.05);
+}
+.card-name {
+  padding:0px 5px;
+  text-align: left;
+  display:inline;
+  vertical-align: middle;
+}
+.card-rank {
+	background-color: rgba(255, 255, 255, 0);
+	border: 0rem solid rgba(0, 0, 0, 0.0);
+  padding: 0px 0px;
+  text-align: center;
+}
+.card-cell {
+  padding:0px 0px;
+}
+.card-contest-name {
+  padding:0px 0px;
+  background-color: rgba(0, 0, 0, 0);
 }
