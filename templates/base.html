@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Mejai's Soulstealer: Competitive Programming Tracker</title>
-    
+
     <script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <link href="{{ url_for('static', filename='css/argon-design-system.css') }}" rel="stylesheet" type="text/css" />
@@ -10,32 +11,34 @@
     <link href="{{ url_for('static', filename='css/submissions.css') }}" rel="stylesheet" type="text/css" />
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" />
 </head>
+
 <body>
     <header>
         <nav>
             <nav class='navbar navbar-expand-lg navbar-dark bg-primary'>
                 <a class="navbar-brand" href="/">
-                    <img src="{{ url_for('static', filename='assets/Mejai.webp') }}" style="box-shadow: 0 0 8px 2px rgba(21, 1, 64, 0.9);" alt="Mejai's Soulstealer">
+                    <img src="{{ url_for('static', filename='assets/Mejai.webp') }}"
+                        style="box-shadow: 0 0 8px 2px rgba(21, 1, 64, 0.9);" alt="Mejai's Soulstealer">
                     Mejai's Soulstealer
                 </a>
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="faq">FAQ</a>
-                    </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="faq">FAQ</a>
+                        </li>
                     </ul>
                 </div>
-            </nav>              
-      </header>
-    <div class="container">
-        {% block content %}
-        {% endblock %}
-    </div>
+            </nav>
+    </header>
+    {% block content %}
+    {% endblock %}
 </body>
+
 </html>

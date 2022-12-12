@@ -1,24 +1,36 @@
 import requests
 import logging
 
+def request_general(url, params):
+    response = requests.get(url, params=params)
+    if response.status_code != 200:
+        logging.warning('HTTP' + str(response.status_code))
+        return 'HTTP', str(response.status_code)
+    response_data = response.json()
+    status = response_data['status']
+    
+    if status != 'OK':
+        comment = response_data['comment']
+        logging.warning(status + comment)
+        return status, comment
+    result = response_data['result']
+    return 'OK', result
+    
+
 def request_contest_list (gym=False):
     url = 'https://codeforces.com/api/contest.list'
     params = {
         'gym': gym
     }
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        return 'FAILED', str(response.status_code)
-    response_data = response.json()
-    status = response_data['status']
-    if status != 'OK':
-        logging.warning(status)
-        return status, response_data['comment']
 
-    contests = response_data['result'] 
+    status, result = request_general(url, params)
+
+    if status != 'OK':
+        return status, result
+
     if not gym:
-        contests = [c for c in contests if c['phase'] == 'FINISHED' and c['type'] == 'CF']
-    return 'OK', contests
+        result = [c for c in result if c['phase'] == 'FINISHED' and c['type'] == 'CF']
+    return status, result
 
 def request_contest_standings(contestId, from_=1, count=1000, handles=None, showUnofficial=True):
     url = 'https://codeforces.com/api/contest.standings'
@@ -34,36 +46,16 @@ def request_contest_standings(contestId, from_=1, count=1000, handles=None, show
     if not handles:
         params.pop('handles')
 
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        return str(response.status_code), str(response.status_code)
+    return request_general(url, params)
 
-    response_data = response.json()
-    status = response_data['status']
-    if status != 'OK':
-        logging.warning(status)
-        return status, str(response_data)
-
-    return 'OK', response_data['result']
-
-def request_user_status(handle, from_=1, count=100):
+def request_user_status(handle, from_=1, count=20000):
     url = 'https://codeforces.com/api/user.status'
     params = {
         'handle': handle,
         'from': from_,
         'count': count
     }
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        return str(response.status_code), []
-
-    response_data = response.json()
-    status = response_data['status']
-    if status != 'OK':
-        logging.warning(status)
-        return status, str(response_data)
-
-    return 'OK', response_data['result']
+    return request_general(url, params)
 
 def request_user_ratedList(activeOnly=True, includeRetired=False, contestId = None):
     url = 'https://codeforces.com/api/user.ratedList'
@@ -74,33 +66,11 @@ def request_user_ratedList(activeOnly=True, includeRetired=False, contestId = No
     }
     if not contestId:
         params.pop('contestId')
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        return str(response.status_code), []
-
-    logging.info("rated response received")
-
-    response_data = response.json()
-    status = response_data['status']
-    if status != 'OK':
-        logging.warning(status)
-        return status, str(response_data)
-
-    return 'OK', response_data['result']
+    return request_general(url, params)
 
 def request_user_info(handles):
     url = 'https://codeforces.com/api/user.info'
     params = {
         'handles': ';'.join(handles)
     }
-    response = requests.get(url, params=params)
-    if response.status_code != 200:
-        return str(response.status_code), str(response.json())
-
-    response_data = response.json()
-    status = response_data['status']
-    if status != 'OK':
-        logging.warning(status)
-        return status, str(response_data)
-
-    return 'OK', response_data['result']
+    return request_general(url, params)

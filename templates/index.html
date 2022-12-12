@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
+<div class="container">
     <h1 class="mb-0">Welcome to Mejai's Soulstealer</h1>
     
     <form action="/show" method="GET">
@@ -17,9 +18,11 @@
         <p><button class="btn btn-primary" type="submit">Submit</button></p>
         {% if data.success_info %}
         <p class="text-success">{{data.success_info}}</p>
-        {% elif data.info %}
-        <p class="text-info">{{data.info}}</p>
         {% endif %}
+        {% if data.warning_info %}
+        <p class="text-warning">{{data.warning_info}}</p>
+        {% endif %}
+        <p class="text-primary">{{ dump_all_handles() | safe}}</p>
     </form>
     <!--
         <form action="/query" method="POST">
@@ -28,5 +31,6 @@
             <p><button class="btn btn-primary" type="submit">Submit</button></p>
         </form>
     -->
+</div>
 {% endblock %}
 

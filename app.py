@@ -1,20 +1,27 @@
 from flask import Flask, render_template, request, url_for
-import requests, json
 from jinja2.filters import FILTERS
 from apscheduler.schedulers.background import BackgroundScheduler
 
+import sys, subprocess, threading
+
 from util import *
+from fetcher import *
 from legacy_request_codeforces import *
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
-FILTERS['color_from_rank'] = color_from_rank
-FILTERS['color_from_rating'] = color_from_rating
+def init():
+    FILTERS['color_from_rank'] = color_from_rank
+    FILTERS['color_from_rating'] = color_from_rating
+    FILTERS['render_handles'] = render_handles
+    app.jinja_env.globals.update(dump_all_handles=dump_all_handles)
 
-scheduler = BackgroundScheduler()
-scheduler.add_job(update_contests, 'interval', seconds=30, max_instances=1)
-scheduler.start()
+
+    logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
+    initialize_db()
+    initialize_users()
+    initialize_contests()
 
 @app.route('/')
 def index_page():
@@ -33,10 +40,10 @@ def faq():
 @app.route('/add', methods=['POST'])
 def add():
     id = request.form['add']
-    if expand_users([id]):
+    if extend_users([id]):
         return render_template('index.html', data={'success_info' : 'OK ' + id})
     else:
-        return render_template('index.html', data={'info' : 'FAILED ' + id})
+        return render_template('index.html', data={'warning_info' : 'FAILED ' + id})
 
 @app.route('/show', methods=['POST', 'GET'])
 def show():
@@ -47,15 +54,34 @@ def show():
     try:
         data = query_handles_contest(ids)
     except Exception as e:
-        return render_template('index.html', data={'err_msg' : str(e)})
+        return render_template('index.html', data={'err_msg' : e})
     return render_template('show.html', data=data)
 
-def init():
-    logging.basicConfig(level=logging.INFO, handlers=[logging.StreamHandler()])
-    initialize_db()
-    initialize_users()
-    initialize_contests()
+def run_flask(host):
+    return subprocess.call([sys.executable, sys.argv[0], host])
+
+def main(argv):
+    port = 11451
+    debug = True
+
+    if argv:
+        init()
+        app.run(host=argv[0], port=port, debug=debug)
+    else:
+        hosts = [
+            "0.0.0.0",
+            "::",
+        ]
+        threads = list()
+        for host in hosts:
+            threads.append(threading.Thread(target=run_flask, args=(host,)))
+
+        for idx, thread in enumerate(threads):
+            print("Starting on {0:s}:{1:d}".format(hosts[idx], port))
+            thread.start()
 
 if __name__ == '__main__':
-    init()
-    app.run(host='0.0.0.0',port=11451)
+    # app.run(host='::',port=11451)
+    print("Python {0:s} {1:d}bit on {2:s}\n".format(" ".join(item.strip() for item in sys.version.split("\n")), 64 if sys.maxsize > 0x100000000 else 32, sys.platform))
+    main(sys.argv[1:])
+    print("\nDone.")

@@ -609,6 +609,7 @@ pre code {
 }
 
 .container {
+  min-width: 540px;
   width: 100%;
   padding-right: 15px;
   padding-left: 15px;
@@ -637,6 +638,12 @@ pre code {
 @media (min-width: 1200px) {
   .container {
     max-width: 1040px;
+  }
+}
+
+@media (min-width: 1366px) {
+  .container {
+    max-width: 1280px;
   }
 }
 
