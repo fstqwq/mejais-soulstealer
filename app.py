@@ -15,6 +15,11 @@ def init():
     FILTERS['color_from_rank'] = color_from_rank
     FILTERS['color_from_rating'] = color_from_rating
     FILTERS['render_handles'] = render_handles
+    FILTERS['shorten_cf_round_names'] = shorten_cf_round_names
+    FILTERS['parse_time'] = parse_time
+    FILTERS['parse_verdict'] = parse_verdict
+    FILTERS['parse_submission_link'] = parse_submission_link
+    FILTERS['parse_problem_link'] = parse_problem_link
     app.jinja_env.globals.update(dump_all_handles=dump_all_handles)
 
 

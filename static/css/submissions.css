@@ -56,43 +56,89 @@
 .no-submission {
 	color: var(--lighter) !important;
 }
+.participantPRACTICE, .participantCONTESTANT, .participantOUT_OF_COMPETITION, .participantVIRTUAL {
+  text-align: center;
+}
 .participantOUT_OF_COMPETITION, .participantVIRTUAL
 {
-	font-weight:700; color: var(--blue);
+	color: var(--blue);
 }
 .participantCONTESTANT
 {
-	font-weight:700; color: var(--mejai-navy);
+	color: var(--mejai-navy);
 }
 .participantPRACTICE
 {
-	font-weight:700; color: var(--mejai-navy);
+  color: var(--gray);
 }
 .participant_notation{
-  font-size: 60% !important;
-  text-align: left;
+  font-weight:700;
+  font-size: 70% !important;
+  font-family:helvetica neue,Helvetica,Arial,sans-serif;text-decoration:none!important;
 }
-.problem-accepted, .problem-rejected, .problem-no, .problem-accepted-upsolve, .card-cell {
+@media (max-width: 576px) {
+  .participant_notation {
+    display: none;
+  }
+}
+.problem-accepted, .problem-rejected, .problem-no, .problem-accepted-upsolve, .card-cell, .width-7 {
   width: 7%;
 }
-.card-rank {
+.width-5 {
   width: 5%;
 }
+.width-6 {
+  width: 6%;
+}
+.width-10 {
+  width: 10%;
+}
 .card-name {
-  width: 18%;
+  width: 20%;
 }
 .card-contest-name {
-  width: 30%;
+  width: 25%;
+  overflow: hidden;
+}
+.rank {
+  font-family:helvetica neue,Helvetica,Arial,sans-serif;
+  text-decoration:none!important;
+  white-space: nowrap;
+  font-size: 90%;
+}
+
+@media (max-width: 1200px) {
+  .rank {
+    font-size: 70%;
+  }
+}
+@media (max-width: 1200px) {
+  .rank {
+    font-size: 70%;
+  }
+}
+@media (max-width: 920px) {
+  .rank {
+    font-size: 60%;
+  }
+}
+@media (max-width: 768px) {
+  .rank {
+    font-size: 50%;
+  }
 }
 .problem-accepted, .problem-rejected, .problem-no, .problem-accepted-upsolve
 {
-  border: 0.0625rem solid rgba(0, 0, 0, 0.125);
+/*  border: 0.0625rem solid rgba(0, 0, 0, 0.125); */
 	padding:0px 0px;
+  border-radius: 0 !important;
   box-shadow: none;
 }
+/*
 .problem-accepted:hover, .problem-rejected:hover, .problem-no:hover, .problem-accepted-upsolve:hover{
 	filter: brightness(97%);
 }
+*/
 .problem-accepted {
 	background-color: #d4edc9 !important;
 }
@@ -100,40 +146,69 @@
 	background: linear-gradient(
     315deg,
     var(--mejai-yellow) 0%,
-    var(--mejai-yellow) 15%,
-    #d4edc9 15%,
+    var(--mejai-yellow) 20%,
+    #d4edc9 20%,
     #d4edc9 100%
   );}
 .problem-rejected {
 	background-color: #ffe3e3 !important;
 }
 .problem-no {
-	background-color: #ffffff !important;
-}
-.contest-holder {
 	background-color: var(--secondary) !important;
 }
-.contestAK {
+.problem-index {
+  width: 100%;
+  text-align: center;
+  margin: auto;
+  padding: 5px;
+  border-radius: 0;
+}
+.text-normal {
+  font-weight: 500 !important;
+}
+.contest-holder {
+	background-color: #ffffff !important;
+  box-shadow: none;
+  border: none;
+  border-radius: 0 !important;
+}
+.contest-name {
+  width: 100%;
+  height: 100%;
+  padding: 5px;
+  margin:auto;
+  border-radius: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.AK {
 	background-color: #d4edc9 !important;
 }
-.contestOPEN {
+.OPEN {
 	background-color: rgb(221, 238, 255) !important;
 }
-.contestRJ {
+.RJ {
 	background-color: #ffe3e3 !important;
 }
-.contestNEW {
-	background-color: #f3f3f3 !important;
+.NEW {
+	background-color: var(--secondary) !important;
 }
 .card-participant {
-	background-color: #faf9ff;
+	background-color: #fff9ff;
+  padding:0px 0px;
+  flex-direction: row;
 }
 .card-concered {
 	background-color: var(--mejai-yellow) !important;
 }
 .card-name, .card-cell {
 	background-color: rgba(255, 255, 255, 0.5);
-	border: 0.0625rem solid rgba(0, 0, 0, 0.05);
+/*	border: 0.0625rem solid rgba(0, 0, 0, 0.05); */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .card-name {
   padding:0px 5px;
@@ -141,16 +216,44 @@
   display:inline;
   vertical-align: middle;
 }
-.card-rank {
-	background-color: rgba(255, 255, 255, 0);
-	border: 0rem solid rgba(0, 0, 0, 0.0);
-  padding: 0px 0px;
-  text-align: center;
-}
 .card-cell {
   padding:0px 0px;
+  text-align: center;
 }
 .card-contest-name {
   padding:0px 0px;
-  background-color: rgba(0, 0, 0, 0);
+}
+table.fixed { table-layout:fixed; }
+a {
+  font-family:helvetica neue,Helvetica,Arial,sans-serif;
+  text-decoration:none!important;
+}
+.td-problem {
+  padding: 0.3rem !important;
+  margin: 0.3rem !important;
+  vertical-align: center;
+  white-space: nowrap;
+  font-size: 1rem;
+  background-color: white;
+  font-family: verdana,arial,sans-serif;
+  overflow: visible;
+}
+.mono {
+  font-family: monospace;
+}
+.supsub {
+  position: absolute;
+  font-size: 0.8rem;
+}
+.superscript {font-weight: normal; display:block; position:relative; left:.1rem; top: -.3rem}
+.subscript {display:block; position:relative; left:.1rem; top: -.5rem}
+
+
+.text-gray {
+  color: #958a9a !important;
+}
+
+a.text-gray:hover,
+a.text-gray:focus {
+  color: #47414e !important;
 }

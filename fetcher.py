@@ -79,7 +79,7 @@ def update_contests():
             contest['rows'] = result['rows']
             contest['problems'] = result['problems']
             contest['result_time'] = int(time.time())
-            contest_dict[contest['id']] = result
+            contest_dict[contest['id']] = contest
             global last_upd_msg
             last_upd_msg = f'Contest {contest["id"]} ({contest["name"]}) : {datetime.now().strftime("%B %d %Y %I:%M:%S %p")}, with last handle {handles[-1]}'
             logging.info(f'success : count = {len(result["rows"])} ' + last_upd_msg)
@@ -97,11 +97,12 @@ def initialize_contests():
         contest['rows'] = []
         contest['problems'] = []
         contest_dict[contest['id']] = contest
+    update_contests()
     db_commit()
     return True
 
-SUBMISSION_AUTO_THRESHOLD = 5 * 60 # seconds
-SUBMISSION_FULL_THRESHOLD = 5 * 60 * 60 # seconds
+SUBMISSION_AUTO_THRESHOLD = 10 # seconds
+SUBMISSION_FULL_THRESHOLD = 10 * 60 * 60 # seconds
 
 def update_handle_submissions(handle):
     logging.info('update handle ' + handle)
@@ -203,9 +204,11 @@ def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
     
     concerned_verdicts = ['no', 'rejected', 'accepted-upsolve', 'accepted']
 
-    for submission in submissions_dict[concerned]:
+    for submission in submissions_dict.get(concerned, list()):
         if 'contestId' not in submission:
             continue # e.g. acmsguru
+        if 'verdict' not in submission:
+            continue # e.g. running
         contest_id = submission['contestId']
         verdict = submission['verdict']
         if contest_id in contest_concerned_submissions:
@@ -289,7 +292,9 @@ def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
     'contests': contest_list,
     'rendered_handles': rendered_handles,
     'new_handles' : [], # deprecated
-    'last_upd_msg' : last_upd_msg}
+    'last_upd_msg' : last_upd_msg,
+    'recent_submissions' : submissions_dict.get(concerned, list())[:40],
+    'recent_submissions_last_upd' : submissions_last_upd.get(concerned, 'None')}
 
 def render_handles(handles):
     ret = []

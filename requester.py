@@ -6,7 +6,10 @@ def request_general(url, params):
     if response.status_code != 200:
         logging.warning('HTTP' + str(response.status_code))
         return 'HTTP', str(response.status_code)
-    response_data = response.json()
+    try:
+        response_data = response.json()
+    except:
+        raise Exception('JSON decode failed. Maybe CodeForces is unavailable.')
     status = response_data['status']
     
     if status != 'OK':
@@ -29,7 +32,7 @@ def request_contest_list (gym=False):
         return status, result
 
     if not gym:
-        result = [c for c in result if c['phase'] == 'FINISHED' and c['type'] == 'CF']
+        result = [c for c in result if c['phase'] == 'FINISHED' and (c['type'] == 'CF' or 'Educational' in c['name'] or 'Rated' in c['name'] or 'Mirror' in c['name'])]
     return status, result
 
 def request_contest_standings(contestId, from_=1, count=1000, handles=None, showUnofficial=True):

@@ -1,55 +1,73 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+.navbar{
+    min-width: 540px;
+}
+</style>
 <div class="container">
-    <div class="row">
-        <div class="col-xl-12 mb-5 mb-xl-0">
+    <div class="row flex-xl-row">
+        <div class="col-xl-9 mb-5 mb-xl-0">
             <div class="card shadow">
                 <div class="card-header border-0">
                     <div class="row align-items-center">
                         <div class="col">
-                            <h3 class="mb-0">Standings <small class="text-muted"> watching {{data.rendered_handles[data.concerned] | safe}}</small></h3>
+                            <h3 class="mb-0">Problems <small class="text-muted"> watching {{data.rendered_handles[data.concerned] | safe}}</small></h3>
                         </div>
                         {% if data.new_handles | length > 0 %}
-                                <div class="col">
-                                    <p class="text-primary"> New handle found : {{data.new_handles | render_handles | safe}}</p>
-                                </div> 
-                            {% endif %}
+                        <div class="col">
+                            <p class="text-primary"> New handle found : {{data.new_handles | render_handles | safe}}</p>
+                        </div> 
+                        {% endif %}
                     </div>
                 </div>
 
                 <div class="accordion" id="accordionExample" data-accordion-auto-fold="false">
                     {% for contest in data.contests %}
                     <div class="card">
-                        <div class="card contest-holder" style="padding:0px 0px; flex-direction: row;">
-                            <div class="card card-contest-name contest{{contest.concerned_status}}" id="heading-{{ contest.id }}">
-                                <button class="btn btn-link" type="button" data-toggle="collapse"
-                                    data-target="#collapse-{{ contest.id }}" aria-expanded="true"
+                        <div class="card contest-holder">
+                            {% set filtered_name = contest.name | shorten_cf_round_names %}
+                            <table class="fixed" style="width: {{ 30 + (contest.problems | length) * 7}}%;">
+                            <td class="width-5 {{contest.concerned_status}}">
+                                    <div class="btn btn-link problem-index"
+                                    type="button"
+                                    data-toggle="collapse"
+                                    data-target="#collapse-{{ contest.id }}"
+                                    aria-expanded="true"
                                     aria-controls="collapse-{{ contest.id }}"
-                                    style="background-color: rgba(0, 0, 0, 0); overflow: visible;">
-                                    {{ contest.name }}
-                                </button>
-                            </div>
+                                    ><a><i class="fa fa-list-ol"></i></a></div>
+                            </td>
+                            <td class="card-contest-name {{contest.concerned_status}}">
+                                <div
+                                data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
+                                data-content="<strong>{{contest.name}}</strong> {% if contest.startTimeSeconds %} <div class='badge badge-secondary'>{{ contest.startTimeSeconds | parse_time }}</div>{% endif %}"
+                                class="contest-name"><a
+                                href="https://codeforces.com/contest/{{contest.id}}" target="_blank">{{
+                                    filtered_name
+                                }}</a></div>
+                            </td>
                             {% for problem in contest.problems %}
-                            <button class="card problem-{{problem.concerned}} btn btn-link" type="button" onclick="window.open('https://codeforces.com/contest/{{contest.id}}/problem/{{ problem.index }}')" style="padding: 0px 0px; margin: 0px 0px;">
-                                <span class="{{problem.rating | color_from_rating}}"
-                                    style="text-align: center; margin: auto; font-weight: 500 !important;">{{
+                            <td class="problem-{{problem.concerned}}">
+                            <div
+                            class="problem-index"
+                            data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
+                            data-content="<strong>{{problem.name}}</strong> <div class='badge badge-secondary {{problem.rating | color_from_rating}}'>{{problem.rating | int}}</div>"
+                            ><a
+                            href="https://codeforces.com/contest/{{contest.id}}/problem/{{ problem.index }}" target="_blank" class="{{problem.rating | color_from_rating}} text-normal">{{
                                         problem.index
-                                    }}</span>
-                                </button>
+                                    }}</span></a></div></td>
                             {% endfor %}
+                            </table>
                         </div>
 
                         <div id="collapse-{{ contest.id }}" class="collapse" aria-labelledby="heading-{{ contest.id }}" data-parent="#accordionExample">
                             <div class="card-body" style="padding:0px 0px;">
+                                <p style="margin-bottom: 0;"><small>Last Update: {{contest.result_time}}</small></p>
                                 {% for line in contest.standings %}
-                                <div class="card
-                                            card-participant
-                                            {% if line.is_concerned %}
-                                                card-concered
-                                            {% endif %}" style="padding:0px 0px; flex-direction: row;">
-                                    <div class="card card-rank participant{{line.type}}">
-                                        <span style="margin: auto">{{ line.rank if
+                                <div class="card card-participant
+                                            {% if line.is_concerned %} card-concered {% endif %}">
+                                    <div class="width-5 participant{{line.type}}"><span class="rank">{{ line.rank if
                                             line.type == 'CONTESTANT' else (line.rank | string) +
                                             ("<sup>#</sup>" | safe) if (line.type == 'VIRTUAL' or
                                             line.type == 'OUT_OF_COMPETITION') else "*" }}</span>
@@ -61,12 +79,17 @@
                                             class="participant{{line.type}} participant_notation"><sub>{{line.type}}</sub></span>
                                         {% endif %}
                                     </div>
-                                    <div class="card card-cell participant{{line.type}}"><span style="margin: auto; font-weight: 500 !important;">{{ line.points | int }}</span></div>
-                                    {% for problem in line.problem_results %}
-                                    <div class="card card-cell">
-                                        <span class="{{problem[0]}}-submission">{{problem[1]}}</span>
-                                    </div>
-                                    {% endfor %}
+                                    <div class="width-5 participant{{line.type}}"><span class="rank">{{ line.points | int }}</span></div>
+                                    
+                                    <table style="width: {{7*(line.problem_results | length | int)}}%">
+                                        <tr>
+                                            {% for problem in line.problem_results %}
+                                            <td class="card-cell">
+                                                <span class="{{problem[0]}}-submission">{{problem[1]}}</span>
+                                            </td>
+                                            {% endfor %}
+                                        </tr>
+                                    </table>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -75,16 +98,45 @@
                     {% endfor %}
                 </div>
             </div>
-            {% if data.last_upd_msg %}
             <div class="card-footer">
                 <div class="col">
-                    <p class="text-primary font-italic"> Last update: {{ data.last_upd_msg }}</p>
+                    <p class="text-primary font-italic">Last update: {% if data.last_upd_msg %} {{ data.last_upd_msg }}{% else %} None {% endif %} </p>
                 </div> 
             </div>
-            {% endif %}
+        </div>
+        
+        <div class="col-xl-3 mb-5 mb-xl-0">
+            <div class="card shadow">
+                <div class="card-header border-0">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">Recent<small class="text-muted"> of {{data.rendered_handles[data.concerned] | safe}}</small></h3>
+                        </div>
+                    </div>
+                    <div class="row align-items-center">
+                        <div class="col table-responsive">
+                            <table class="table table-bordered">
+                                <tr>
+                                    <td colspan="2">
+                                        Last update: {{ data.recent_submissions_last_upd | parse_time}}
+                                    </td>
+                                </tr>
+                                {% for submission in data.recent_submissions %}
+                                <tr>
+                                    <td class="td-problem" style="width: 9em;">
+                                    <a href="{{ submission | parse_submission_link }}" target="_blank" class="text-gray">
+                                    {{submission | parse_verdict | safe
+                                }}</a></td>
+                                    <td class="td-problem" style="width: 100%;"><a href="{{ submission.problem | parse_problem_link  }}" target="_blank">{{submission.problem.name}}</a></td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-test
 
 {% endblock %}
