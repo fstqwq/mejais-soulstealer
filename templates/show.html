@@ -8,7 +8,7 @@
 </style>
 <div class="container">
     <div class="row flex-xl-row">
-        <div class="col-xl-9 mb-5 mb-xl-0">
+        <div class="col-xl-9 mb-5 mb-xl-0" id="contest-standings">
             <div class="card shadow">
                 <div class="card-header border-0">
                     <div class="row align-items-center">
@@ -101,13 +101,13 @@
             </div>
         </div>
         
-        <div class="col-xl-3 mb-5 mb-xl-0">
+        <div class="col-xl-3 mb-5 mb-xl-0" id="recent-submissions">
             <div class="card shadow">
                 <div class="card-header border-0">
                     <div class="row align-items-center">
                         <div class="col">
-                            <h3 class="mb-0">Recent<small class="text-muted"> of {{data.rendered_handles[data.concerned] | safe}}</small></h3>
-                            <small> Last update: {{ data.recent_submissions_last_upd | parse_time}} </small>
+                            <h3 class="mb-0">Recent<small class="text-muted"> of <div id="concerned-id" style="display: inline;">{{data.rendered_handles[data.concerned] | safe}}</div></small></h3>
+                            <div class="text-primary"><div id="sub-last-upd" style="display: inline;">Last update: {{ data.recent_submissions_last_upd | parse_time}}</div> {% if data.too_many_msg %}<div class="text-danger">Too many requests, please slow down. </div>{% elif data.submissions_updating %}<span id="sub-updating"><i class="fa fa-spin fa-spinner"></i></span>{% else %}<span><i class="fa fa-check"></i></span>{% endif %}</div>
                         </div>
                     </div>
                 </div>

@@ -1,6 +1,7 @@
-from flask import Flask, render_template, request, url_for
+from flask import Flask, render_template, request, url_for, jsonify
 from jinja2.filters import FILTERS
 from apscheduler.schedulers.background import BackgroundScheduler
+import json
 
 import sys, subprocess, threading
 
@@ -11,7 +12,7 @@ from legacy_request_codeforces import *
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
 
-def init():
+with app.app_context():
     FILTERS['color_from_rank'] = color_from_rank
     FILTERS['color_from_rating'] = color_from_rating
     FILTERS['render_handles'] = render_handles
@@ -27,6 +28,7 @@ def init():
     initialize_db()
     initialize_users()
     initialize_contests()
+    threading.Thread(target=worker, daemon=True).start()
 
 @app.route('/')
 def index_page():
@@ -62,28 +64,23 @@ def show():
         return render_template('index.html', data={'err_msg' : e})
     return render_template('show.html', data=data)
 
-def run_flask(host):
-    return subprocess.call([sys.executable, sys.argv[0], host])
+@app.route('/recent_submission', methods=['GET'])
+def recent_submission():
+    try:
+        id = request.args['id']
+        stamp = request.args['last']
+        status, data = check_recent_submissions(id, stamp.replace('Last update: ', ''))
+    except Exception as e:
+        return jsonify({'status': 'FAILED', 'comment' : e}),200,{"ContentType":"application/json"}
+    if status == 'OK':
+        return jsonify({'status': 'OK', 'result': render_template('recent_submission', data=data)}),200,{"ContentType":"application/json"}
+    else:
+        return jsonify({'status': 'WAITING', 'comment': 'not ready'}),200,{"ContentType":"application/json"}
 
 def main(argv):
     port = 11451
     debug = True
-
-    if argv:
-        init()
-        app.run(host=argv[0], port=port, debug=debug)
-    else:
-        hosts = [
-            "0.0.0.0",
-            "::",
-        ]
-        threads = list()
-        for host in hosts:
-            threads.append(threading.Thread(target=run_flask, args=(host,)))
-
-        for idx, thread in enumerate(threads):
-            print("Starting on {0:s}:{1:d}".format(hosts[idx], port))
-            thread.start()
+    app.run(host=argv[0], port=port, debug=debug)
 
 if __name__ == '__main__':
     # app.run(host='::',port=11451)

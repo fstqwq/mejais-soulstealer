@@ -42,8 +42,10 @@ def color_from_rating(rating):
 def shorten_cf_round_names(name: str):
     return name.replace('Educational Codeforces', 'Edu').replace('Codeforces', 'CF').replace('Round', '')
 
+parse_time_format = '%y-%m-%d %H:%M:%S'
+
 def parse_time(unix_timestamp: float):
-    return datetime.fromtimestamp(unix_timestamp).strftime('%y-%m-%d %H:%M:%S')
+    return datetime.fromtimestamp(unix_timestamp).strftime(parse_time_format)
 
 def shorten_language(lang : str):
     return lang.replace('GNU ', '')
