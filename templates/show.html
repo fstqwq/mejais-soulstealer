@@ -14,6 +14,7 @@
                     <div class="row align-items-center">
                         <div class="col">
                             <h3 class="mb-0">Problems <small class="text-muted"> watching {{data.rendered_handles[data.concerned] | safe}}</small></h3>
+                            <small>Last update: {% if data.last_upd_msg %} {{ data.last_upd_msg }}{% else %} None {% endif %}</small>
                         </div>
                         {% if data.new_handles | length > 0 %}
                         <div class="col">
@@ -98,11 +99,6 @@
                     {% endfor %}
                 </div>
             </div>
-            <div class="card-footer">
-                <div class="col">
-                    <p class="text-primary font-italic">Last update: {% if data.last_upd_msg %} {{ data.last_upd_msg }}{% else %} None {% endif %} </p>
-                </div> 
-            </div>
         </div>
         
         <div class="col-xl-3 mb-5 mb-xl-0">
@@ -111,23 +107,22 @@
                     <div class="row align-items-center">
                         <div class="col">
                             <h3 class="mb-0">Recent<small class="text-muted"> of {{data.rendered_handles[data.concerned] | safe}}</small></h3>
+                            <small> Last update: {{ data.recent_submissions_last_upd | parse_time}} </small>
                         </div>
                     </div>
+                </div>
+                
+                <div class="card border-0">
                     <div class="row align-items-center">
-                        <div class="col table-responsive">
-                            <table class="table table-bordered">
-                                <tr>
-                                    <td colspan="2">
-                                        Last update: {{ data.recent_submissions_last_upd | parse_time}}
-                                    </td>
-                                </tr>
+                        <div class="col">
+                            <table class="table table-bordered table-striped fixed">
                                 {% for submission in data.recent_submissions %}
                                 <tr>
-                                    <td class="td-problem" style="width: 9em;">
+                                    <td class="td-problem" style="width: 8em;">
                                     <a href="{{ submission | parse_submission_link }}" target="_blank" class="text-gray">
                                     {{submission | parse_verdict | safe
                                 }}</a></td>
-                                    <td class="td-problem" style="width: 100%;"><a href="{{ submission.problem | parse_problem_link  }}" target="_blank">{{submission.problem.name}}</a></td>
+                                    <td class="td-problem td-name"><a href="{{ submission.problem | parse_problem_link  }}" target="_blank">{{submission.contestId}}{{submission.problemsetName}}{{submission.problem.index}}. {{submission.problem.name}}</a></td>
                                 </tr>
                                 {% endfor %}
                             </table>

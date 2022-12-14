@@ -229,21 +229,23 @@ a {
   text-decoration:none!important;
 }
 .td-problem {
-  padding: 0.3rem !important;
-  margin: 0.3rem !important;
+  vertical-align: middle !important;
+  padding: 4px !important;
   vertical-align: center;
   white-space: nowrap;
-  font-size: 1rem;
-  background-color: white;
-  font-family: verdana,arial,sans-serif;
-  overflow: visible;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 16px;
+}
+.td-name {
+  font-size: 12px;
 }
 .mono {
   font-family: monospace;
 }
 .supsub {
   position: absolute;
-  font-size: 0.8rem;
+  font-size: 12px;
 }
 .superscript {font-weight: normal; display:block; position:relative; left:.1rem; top: -.3rem}
 .subscript {display:block; position:relative; left:.1rem; top: -.5rem}

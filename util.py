@@ -89,7 +89,8 @@ def parse_verdict(submission):
         verdict = 'Hacked'
     else:
         verdict = " ".join(verdict.split()).title() 
-    return f'<span class="mono {class_type}">{verdict}</span><span class="mono supsub"><span class="superscript">{parse_time(submission["creationTimeSeconds"])[:-3]}</span><span class="subscript"><span class="{class_type}">{tests}</span><span>{shorten_language(submission["programmingLanguage"])[:11]}</span></span></span><span class="mono" style="user-select: none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>'
+    return f'<span class="mono {class_type}">{verdict}</span><span class="mono supsub"><span class="superscript">{parse_time(submission["creationTimeSeconds"])[:-3]}</span><span class="subscript"><span class="{class_type}">{tests}</span><span>{shorten_language(submission["programmingLanguage"])[:11]}</span></span></span>'
+    # <span class="mono" style="user-select: none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
 
 def parse_submission_link(submission):
   if 'contestId' in submission and submission['contestId'] < 100000:
