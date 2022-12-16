@@ -1,8 +1,6 @@
 from flask import Flask, render_template, request, url_for, jsonify
 from jinja2.filters import FILTERS
-from apscheduler.schedulers.background import BackgroundScheduler
-import json
-import sys, subprocess, threading
+import sys, threading
 
 from util import *
 from fetcher import *
