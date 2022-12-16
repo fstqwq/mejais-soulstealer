@@ -66,7 +66,7 @@ def show():
             page = int(request.args['page'])
         else:
             page = 1
-        if 'main' in request.args:
+        if 'main' in request.args and len(request.args['main']) > 0:
             concerned = request.args['main']
         else:
             concerned = None

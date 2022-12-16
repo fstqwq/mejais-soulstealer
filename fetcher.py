@@ -39,13 +39,14 @@ submissions_last_request = {}
 def initialize_db():
     logging.info('initialize db')
     with shelve.open(DB_FILE) as db:
-        if 'mejai' not in db: # token that when a databased initialized successufully
+        if 'mejai' not in db or 'contest' not in db or 'handle' not in db:
             logging.info('new db')
             db.clear() # reconstruct database
             db["contest"] = {}
             db['handle'] = {}
             db['mejai'] = None
     db_read()
+    logging.info(last_upd_msg)
 
 user_standing_worker_threshold = time.time()
 
@@ -76,14 +77,15 @@ def extend_users(handles):
 def initialize_users():
     logging.info('initialize users')
     logging.info(f'users : {len(handle_dict)}')
-    if len(handle_dict) == 0:
+    # if len(handle_dict) == 0:
         # initialize the handle set, with user information
-        return extend_users(['tourist'])
+    #    return extend_users(['tourist'])
     return False
 
 MAX_HANDLES = 100
 
 def update_contest(contest_id):
+    global contest_dict
     with dict_lock:
         assert contest_id in contest_dict
         contest = contest_dict[contest_id]
@@ -123,9 +125,8 @@ def update_contest_list():
                 contest['problems'] = []
                 contest_dict[contest['id']] = contest
             else:
-                contest['rows'] = contest_dict[contest_id]['rows']
-                contest['problems'] = contest_dict[contest_id]['problems']
-                contest_dict[contest['id']] = contest
+                for key, value in contest.items():
+                    contest_dict[contest['id']][key] = value
         contest_dict = dict(sorted(contest_dict.items(), key=lambda x:x[1]['startTimeSeconds'], reverse=True))
         assert contest_id in contest_dict
         db_commit(CONTEST)
@@ -244,7 +245,6 @@ def worker_part_time():
             time.sleep(5 * INTERVAL - diff_time) # don't be so fast!
             continue
         
-        logging.info('working')
         current_time = time.time()
         if current_time - last_upd_contest_list > CONTEST_LIST_THRESHOLD:
             job_queue.put((time.time(), CONTEST_LIST, None))
@@ -432,6 +432,8 @@ def query_handles_contest(handles, page = 1, concerned = None):
                 'concerned_status': concerned_status,
                 'result_time': parse_time(contest['result_time']) if 'result_time' in contest else None}
             contest_list.append(contest_return_dict)
+        handles.remove(concerned)
+        handles.insert(0, concerned)
         return {'concerned': concerned,
         'contests': contest_list,
         'contest_from' : from_,
