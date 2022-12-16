@@ -1,28 +1,27 @@
 <div class="card shadow">
-    <div class="card-header border-0">
-        <div class="row align-items-center">
-            <div class="col">
-                <h3 class="mb-0">Recent<small class="text-muted"> of <div id="concerned-id" style="display: inline;">{{data.rendered_handles[data.concerned] | safe}}</div></small></h3>
-                <div class="text-primary"><div id="sub-last-upd" style="display: inline;">Last update: {{ data.recent_submissions_last_upd | parse_time}}</div> <span><i class="fa fa-check"></i></span></div>
-            </div>
-        </div>
+<div class="card-header border-0">
+ <div class="row align-items-center">
+  <div class="col">
+   <h3 class="mb-0">Recent<small class="text-muted"> of <div id="concerned-id" style="display: inline;">{{data.rendered_handles[data.concerned] | safe}}</div></small></h3>
+    <div class='text-primary' style="font-weight: 300;">
+    <div id="sub-last-upd" style="display: inline;">Last update: {% if data.recent_submissions_last_upd != 'None' %}{{ data.recent_submissions_last_upd | parse_time}}{% else %}None{% endif %}</div>
+    {% if data.too_many_msg %}<div class="text-danger">Too many requests, please slow down.</div>{%
+        elif data.submissions_updating 
+    %}<span id="sub-updating"><i class="fa fa-spin fa-spinner"></i></span>{%
+        else %}<span><i class="fa fa-check"></i></span>{% endif %}
     </div>
-    
-    <div class="card border-0">
-        <div class="row align-items-center">
-            <div class="col">
-                <table class="table table-bordered table-striped fixed">
-                    {% for submission in data.recent_submissions %}
-                    <tr>
-                        <td class="td-problem" style="width: 8em;">
-                        <a href="{{ submission | parse_submission_link }}" target="_blank" class="text-gray">
-                        {{submission | parse_verdict | safe
-                    }}</a></td>
-                        <td class="td-problem td-name"><a href="{{ submission.problem | parse_problem_link  }}" target="_blank">{{submission.contestId}}{{submission.problemsetName}}{{submission.problem.index}}. {{submission.problem.name}}</a></td>
-                    </tr>
-                    {% endfor %}
-                </table>
-            </div>
-        </div>
-    </div>
+  </div>
+ </div>
+</div>
+
+<div class="card border-0">
+ <div class="row align-items-center">
+  <div class="col">
+   <table class="table table-bordered table-striped fixed">
+    {% for submission in data.recent_submissions %}<tr><td class="td-problem td-verdict"><a href="{{ submission | parse_submission_link }}" target="_blank" class="text-gray">{{submission | parse_verdict | safe }}</a></td>
+    <td class="td-problem td-name"><a href="{{ submission.problem | parse_contest_link  }}" target="_blank"><small>{{submission.contestId}}{{submission.problem.problemsetName}} </small></a><a href="{{ submission.problem | parse_problem_link  }}" target="_blank">{{submission.problem.index}}. {{submission.problem.name}}</a></td></tr>{% endfor %}
+   </table>
+  </div>
+ </div>
+</div>
 </div>

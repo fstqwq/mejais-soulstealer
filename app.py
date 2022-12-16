@@ -2,12 +2,13 @@ from flask import Flask, render_template, request, url_for, jsonify
 from jinja2.filters import FILTERS
 from apscheduler.schedulers.background import BackgroundScheduler
 import json
-
 import sys, subprocess, threading
 
 from util import *
 from fetcher import *
 from legacy_request_codeforces import *
+
+from config import * # SECRET_KEY
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
@@ -21,6 +22,7 @@ with app.app_context():
     FILTERS['parse_verdict'] = parse_verdict
     FILTERS['parse_submission_link'] = parse_submission_link
     FILTERS['parse_problem_link'] = parse_problem_link
+    FILTERS['parse_contest_link'] = parse_contest_link
     app.jinja_env.globals.update(dump_all_handles=dump_all_handles)
 
 
@@ -29,6 +31,7 @@ with app.app_context():
     initialize_users()
     initialize_contests()
     threading.Thread(target=worker, daemon=True).start()
+    threading.Thread(target=worker_part_time, daemon=True).start()
 
 @app.route('/')
 def index_page():
@@ -36,6 +39,7 @@ def index_page():
 
 @app.route('/query', methods=['POST'])
 def submit():
+    return jsonify({'status': 'DEPRECATED'}),200,{"ContentType":"application/json"}
     cf_id = request.form['cf']
     concerned = cf_id.split(';')[0]
     return render_template('query.html', contests=request_codeforces(cf_id), rated_color=cf_community_rated_color(cf_id), concerned = concerned)
@@ -47,19 +51,28 @@ def faq():
 @app.route('/add', methods=['POST'])
 def add():
     id = request.form['add']
-    if extend_users([id]):
-        return render_template('index.html', data={'success_info' : 'OK ' + id})
+    if id.startswith(SECRET_KEY):
+        id = split_handles(id[len(SECRET_KEY):])
     else:
-        return render_template('index.html', data={'warning_info' : 'FAILED ' + id})
+        id = [id]
+    if extend_users(id):
+        return render_template('index.html', data={'success_info' : 'OK ' + str(id)})
+    else:
+        return render_template('index.html', data={'warning_info' : 'FAILED ' + str(id)})
 
-@app.route('/show', methods=['POST', 'GET'])
+@app.route('/show', methods=['GET'])
 def show():
-    if request.method == 'POST':
-        ids = request.form['ids']
-    else:
-        ids = request.args['ids']
     try:
-        data = query_handles_contest(ids)
+        ids = request.args['ids']
+        if 'page' in request.args:
+            page = int(request.args['page'])
+        else:
+            page = 1
+        if 'main' in request.args:
+            concerned = request.args['main']
+        else:
+            concerned = None
+        data = query_handles_contest(ids, page=page, concerned=concerned)
     except Exception as e:
         return render_template('index.html', data={'err_msg' : e})
     return render_template('show.html', data=data)
@@ -75,7 +88,7 @@ def recent_submission():
     if status == 'OK':
         return jsonify({'status': 'OK', 'result': render_template('recent_submission', data=data)}),200,{"ContentType":"application/json"}
     else:
-        return jsonify({'status': 'WAITING', 'comment': 'not ready'}),200,{"ContentType":"application/json"}
+        return jsonify({'status': 'WAITING'}),200,{"ContentType":"application/json"}
 
 def main(argv):
     port = 11451

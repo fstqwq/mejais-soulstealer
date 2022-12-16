@@ -91,22 +91,30 @@ def parse_verdict(submission):
         verdict = 'Hacked'
     else:
         verdict = " ".join(verdict.split()).title() 
-    return f'<span class="mono {class_type}">{verdict}</span><span class="mono supsub"><span class="superscript">{parse_time(submission["creationTimeSeconds"])[:-3]}</span><span class="subscript"><span class="{class_type}">{tests}</span><span>{shorten_language(submission["programmingLanguage"])[:11]}</span></span></span>'
+    return f'<span class="mono {class_type}">{verdict}</span> <span class="mono supsub"><span class="superscript">{parse_time(submission["creationTimeSeconds"])[:-3]}</span> <span class="subscript"><span class="{class_type}">{tests}</span> <span>{shorten_language(submission["programmingLanguage"])[:11]}</span></span></span>'
     # <span class="mono" style="user-select: none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
 
 def parse_submission_link(submission):
   if 'contestId' in submission and submission['contestId'] < 100000:
     return "https://codeforces.com/contest/%d/submission/%d" % (submission['contestId'], submission['id'])
-  elif 'problemsetName' in submission:
-    return "https://codeforces.com/problemsets/%s/submission/99999/%d" % (submission['problemsetName'], submission['id'])
+  elif 'problemsetName' in submission['problem']:
+    return "https://codeforces.com/problemsets/%s/submission/99999/%d" % (submission['problem']['problemsetName'], submission['id'])
   else:
     return "https://codeforces.com/gym/%d/submission/%d" % (submission['contestId'], submission['id'])
+
+def parse_contest_link(problem):
+  if 'contestId' in problem and problem['contestId'] < 100000:
+    return "https://codeforces.com/contest/%d/" % (problem['contestId'])
+  elif 'problemsetName' in problem:
+    return "https://codeforces.com/problemsets/%s/" % (problem['problemsetName'])
+  else:
+    return "https://codeforces.com/gym/%d/" % (problem['contestId'])
 
 def parse_problem_link(problem):
   if 'contestId' in problem and problem['contestId'] < 100000:
     return "https://codeforces.com/contest/%d/problem/%s" % (problem['contestId'], problem['index'])
   elif 'problemsetName' in problem:
-    return "https://codeforces.com/problemsets/%s/problems/%s" % (problem['problemsetName'], problem['index'])
+    return "https://codeforces.com/problemsets/%s/problem/99999/%s" % (problem['problemsetName'], problem['index'])
   else:
     return "https://codeforces.com/gym/%d/problem/%s" % (problem['contestId'], problem['index'])
 
@@ -152,3 +160,53 @@ def create_table_html(data):
     html += '</table>\n'
 
     return html
+
+def split_handles(handles):
+    if isinstance(handles, str):
+        if ';' in handles:
+            handles = handles.split(';')
+        elif ',' in handles:
+            handles = handles.split(',')
+        elif ' ' in handles:
+            handles = handles.split(' ')
+        else:
+            handles = handles.split()
+        handles = [handle.replace(',', '').replace(';', '').replace(' ', '') for handle in handles]
+    return handles
+
+def gen_page(cur_page: int, max_page: int):
+    ret = []
+    if cur_page != 1:
+        ret.append(['<', cur_page - 1, 0])
+    else:
+        ret.append(['<', cur_page - 1, -1])  # -1 for disabled
+    if max_page < 5:
+        for i in range(1, max_page + 1):
+            if i != cur_page:
+                ret.append([str(i), i, 0])
+            else:
+                ret.append([str(i), i, 1])  # 1 for highlight
+    else:
+        if cur_page - 2 < 1:
+            for i in range(1, 6):
+                if i != cur_page:
+                    ret.append([str(i), i, 0])
+                else:
+                    ret.append([str(i), i, 1])
+        elif cur_page + 2 > max_page:
+            for i in range(max_page - 4, max_page + 1):
+                if i != cur_page:
+                    ret.append([str(i), i, 0])
+                else:
+                    ret.append([str(i), i, 1])
+        else:
+            for i in range(cur_page - 2, cur_page + 3):
+                if i != cur_page:
+                    ret.append([str(i), i, 0])
+                else:
+                    ret.append([str(i), i, 1])
+    if cur_page < max_page:
+        ret.append(['>', cur_page + 1, 0])
+    else:
+        ret.append(['>', cur_page + 1, -1])
+    return ret

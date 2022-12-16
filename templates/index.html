@@ -1,36 +1,46 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <h1 class="mb-0">Welcome to Mejai's Soulstealer</h1>
+<div class="container" style="max-width: 960px;">
+<div class="row flex-l-row">
+<div class="col mb-5 mb-xl-0">
+   <div class="card shadow">
+    <div class="card-header">
+     <h3 class="mb-0">Welcome to Mejai's Soulstealer</h3>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+          <form class="form-group input-group-alternative" action="/show" method="GET">
+            <label for="ids">CF IDs:</label>
+            <input type="text" name="ids" id="ids" aria-describedby="addon-right addon-left" placeholder="tourist, jiangly" class="form-control">
+            <label for="main">Main watching:</label>
+            <input type="text" name="main" id="main" aria-describedby="addon-right addon-left" placeholder="(Default is the first handle above)" class="form-control">
+            <input type="submit" class="btn btn-block btn-primary" value="Query">
+            {% if data.err_msg %}
+            <p class="text-danger">{{data.err_msg}}</p>
+            {% endif %}
+          </form>
+        </div>
+        <div class="col-md-6">
+          <form class="form-group input-group-alternative" action="/add" method="POST">
+            <label for="add">Add ID for watch:</label>
+            <input type="text" name="add" id="add" aria-describedby="addon-right addon-left" placeholder="tourist" class="form-control">
+            <input type="submit" class="btn btn-block btn-primary" value="Add">
+            {% if data.success_info %}
+            <p class="text-success">{{data.success_info}}</p>
+            {% endif %}
+            {% if data.warning_info %}
+            <p class="text-warning">{{data.warning_info}}</p>
+            {% endif %}
+          </form>
+        </div>
+    </div>
     
-    <form action="/show" method="GET">
-        <p><label for="ids">Entry CF IDs:</label><br>
-        <input type="text" name="ids" id="ids"></p>
-        <p><button class="btn btn-primary" type="submit">Submit</button></p>
-        {% if data.err_msg %}
-        <p class="text-danger">{{data.err_msg}}</p>
-        {% endif %}
-    </form>
-    <form action="/add" method="POST">
-        <p><label for="add">Add ID for watch:</label><br>
-        <input type="text" name="add" id="add"></p>
-        <p><button class="btn btn-primary" type="submit">Submit</button></p>
-        {% if data.success_info %}
-        <p class="text-success">{{data.success_info}}</p>
-        {% endif %}
-        {% if data.warning_info %}
-        <p class="text-warning">{{data.warning_info}}</p>
-        {% endif %}
-        <p class="text-primary">{{ dump_all_handles() | safe}}</p>
-    </form>
-    <!--
-        <form action="/query" method="POST">
-            <p><label for="cf">Legacy: Entry CF IDs seperated by ';':</label><br>
-            <input type="text" name="cf" id="cf"></p>
-            <p><button class="btn btn-primary" type="submit">Submit</button></p>
-        </form>
-    -->
+    <div class="card-footer">
+        <p class="text-primary">Current users: {{ ','.join(dump_all_handles()) | safe}}</p>
+    </div>
+    </div>
+</div>
+</div>
 </div>
 {% endblock %}
-

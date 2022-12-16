@@ -13,6 +13,8 @@ handle_dict = {}
 contest_dict = {}
 last_upd_msg = None
 
+SUB, CONTEST, USER, CONTEST_LIST = 0, 1, 2, 3
+
 def db_read():
     global handle_dict, contest_dict, last_upd_msg
     with shelve.open(DB_FILE) as db:
@@ -20,12 +22,14 @@ def db_read():
         contest_dict = db["contest"]
         last_upd_msg = db['mejai']
 
-def db_commit():
+def db_commit(update_type = 3):
     global handle_dict, contest_dict, last_upd_msg
     with shelve.open(DB_FILE) as db:
-        db["contest"] = contest_dict
-        db['handle'] = handle_dict
-        db['mejai'] = last_upd_msg
+        if update_type & CONTEST:
+            db['mejai'] = last_upd_msg
+            db["contest"] = contest_dict
+        if update_type & USER:
+            db['handle'] = handle_dict
 
 # in-memory cache, no need to write in db since it's fast
 submissions_dict = {}
@@ -43,20 +47,26 @@ def initialize_db():
             db['mejai'] = None
     db_read()
 
+user_standing_worker_threshold = time.time()
+
 def update_users(input_handles=None):
-    status, users = request_user_info(handle_dict.keys() if not input_handles else input_handles)
+    status, users = request_user_info(input_handles)
     if status != 'OK':
         logging.info(status + users)
         return False
     for user in users:
         handle = user['handle']
-        user['result_time'] = time.time()
         handle_dict[handle] = user
-    db_commit()
-    return True
+        current_time = time.time()
+        user['result_time'] = current_time
+        global user_standing_worker_threshold
+        user_standing_worker_threshold = current_time
+    db_commit(USER)
+    return len(users) > 0
 
 def extend_users(handles):
-    handles = [h for h in handles if h not in handle_dict.keys()]
+    with dict_lock:
+        handles = [h for h in handles if h not in handle_dict.keys()]
 
     if len(handles) > 0:
         return update_users(handles)
@@ -74,44 +84,58 @@ def initialize_users():
 MAX_HANDLES = 100
 
 def update_contest(contest_id):
-    assert contest_id in contest_dict
-    contest = contest_dict[contest_id]
-    logging.info(f'loading contest {contest_id} : ' + contest['name'])
-    handles = list(handle_dict.keys())[MAX_HANDLES]
-    if len(handles) == 0:
-        return
+    with dict_lock:
+        assert contest_id in contest_dict
+        contest = contest_dict[contest_id]
+        logging.info(f'loading contest {contest_id} : ' + contest['name'])
+        handles = list(handle_dict.keys())[:MAX_HANDLES]
+        if len(handles) == 0:
+            return
     status, result = request_contest_standings(contest['id'], handles=handles)
-    if status != 'OK':
-        logging.info(f'{status} : {result}')
-    else:
-        contest['rows'] = result['rows']
-        contest['problems'] = result['problems']
-        contest['result_time'] = int(time.time())
-        contest_dict[contest['id']] = contest
-        global last_upd_msg
-        last_upd_msg = f'Contest {contest["id"]} ({contest["name"]}) : {datetime.now().strftime("%B %d %Y %I:%M:%S %p")}, with last handle {handles[-1]}'
-        logging.info(f'success : count = {len(result["rows"])} ' + last_upd_msg)
-    db_commit()
+    with dict_lock:
+        if status != 'OK':
+            logging.info(f'{status} : {result}')
+            if 'disabled_until' in contest:
+                contest['disabled_until'] = time.time() + 5 * 60
+            else:
+                contest['disabled_until'] = time.time() + 60 * 60
+        else:
+            contest['rows'] = result['rows']
+            contest['problems'] = result['problems']
+            contest['result_time'] = time.time()
+            contest_dict[contest['id']] = contest
+            global last_upd_msg
+            last_upd_msg = f'Contest {contest["id"]} ({contest["name"]}) : {datetime.now().strftime("%B %d %Y %I:%M:%S %p")}, with last handle {handles[-1]}'
+            logging.info(f'success : count = {len(result["rows"])} ' + last_upd_msg)
+        db_commit(CONTEST)
 
-def update_contests():
-    currenct_contest = contest_dict.keys()
-    for contest in currenct_contest:
-        update_contest(contest)
+def update_contest_list():
+    status, contests = request_contest_list ()
+    if status != 'OK':
+        logging.warning('load contest list failed: ' + contests)
+        return False
+    with dict_lock:
+        global contest_dict
+        for contest in contests:
+            contest_id = contest['id']
+            if contest_id not in contest_dict:
+                contest['rows'] = []
+                contest['problems'] = []
+                contest_dict[contest['id']] = contest
+            else:
+                contest['rows'] = contest_dict[contest_id]['rows']
+                contest['problems'] = contest_dict[contest_id]['problems']
+                contest_dict[contest['id']] = contest
+        contest_dict = dict(sorted(contest_dict.items(), key=lambda x:x[1]['startTimeSeconds'], reverse=True))
+        assert contest_id in contest_dict
+        db_commit(CONTEST)
+        return True
 
 def initialize_contests():
     logging.info('initialize contests')
     if len(contest_dict) > 0:
         return False
-    status, contests = request_contest_list ()
-    if status != 'OK':
-        logging.warning('load contest list failed: ' + contests)
-        return False
-    for contest in contests:
-        contest['rows'] = []
-        contest['problems'] = []
-        contest_dict[contest['id']] = contest
-    update_contests()
-    db_commit()
+    update_contest_list()
     return True
 
 def update_handle_submissions(handle):
@@ -167,25 +191,24 @@ def update_handle_submissions(handle):
         return 'OK', len(result)
 
 SUBMISSION_AUTO_THRESHOLD = 5 # seconds
-
-def should_update_handle_submissions(handle):
-    if handle in submissions_last_upd and time.time() - submissions_last_upd[handle] < SUBMISSION_AUTO_THRESHOLD:
-        return False
-    return True
-
 TOO_MANY_REQUESTS = 20
+INTERVAL = .5
+CONTEST_LIST_THRESHOLD = 12 * 60 * 60 # seconds
 
 job_queue = queue.Queue(TOO_MANY_REQUESTS)
 
 
 last_task_complete = time.time() # init
 
-INTERVAL = .5
+last_upd_contest_list = 0
 
-SUB, CONTEST = range(2)
+def should_update_handle_submissions(handle):
+    if handle in submissions_last_upd and time.time() - submissions_last_upd[handle] < SUBMISSION_AUTO_THRESHOLD:
+        return False
+    return True
 
 def worker():
-    global last_task_complete
+    global last_task_complete, last_upd_contest_list, user_standing_worker_threshold
     while True:
         diff_time = time.time() - last_task_complete
         if diff_time < INTERVAL:
@@ -196,32 +219,53 @@ def worker():
         if job_type == SUB: # name = handle
             if name not in submissions_last_upd or should_update_handle_submissions(name):
                 update_handle_submissions(name)
+                logging.info("complete_time: " + str(submissions_last_upd[name] - request_time))
                 last_task_complete = time.time()
-        else: # name = id
-            if name not in contest_dict or contest_dict[name]['result_time'] <= request_time:
+        elif job_type == CONTEST: # name = id
+            if name not in contest_dict or 'result_time' not in contest_dict[name] or contest_dict[name]['result_time'] <= request_time:
                 update_contest(name)
                 last_task_complete = time.time()
+        else:
+            if update_contest_list():
+                current_time = time.time()
+                last_upd_contest_list = current_time
+                user_standing_worker_threshold = current_time
+            last_task_complete = time.time()
         job_queue.task_done()
 
 
+
 def worker_part_time():
+    global user_standing_worker_threshold, last_upd_contest_list
     while True:
         job_queue.join()
+        diff_time = time.time() - last_task_complete
+        if diff_time < 5 * INTERVAL:
+            time.sleep(5 * INTERVAL - diff_time) # don't be so fast!
+            continue
+        
+        logging.info('working')
+        current_time = time.time()
+        if current_time - last_upd_contest_list > CONTEST_LIST_THRESHOLD:
+            job_queue.put((time.time(), CONTEST_LIST, None))
+        else:
+            with dict_lock:
+                found = False
+                for contest in contest_dict.values():
+                    if 'result_time' not in contest or contest['result_time'] < user_standing_worker_threshold:
+                        if 'disabled_until' not in contest or contest['disabled_until'] < time.time():
+                            found = True
+                            job_queue.put((time.time(), CONTEST, contest['id'])) 
+                            break
+                if not found:
+                    user_standing_worker_threshold = time.time()
+
 
 
 def preprocess_handles(handles):
     if handles is None or len(handles) == 0 or len(handles) > 10000:
         raise Exception(f'bad handles : input len = {None if handles is None else len(handles)}')
-    if isinstance(handles, str):
-        if ';' in handles:
-            handles = handles.split(';')
-        elif ',' in handles:
-            handles = handles.split(',')
-        elif ' ' in handles:
-            handles = handles.split(' ')
-        else:
-            handles = handles.split()
-        handles = [handle.replace(',', '').replace(';', '').replace(' ', '') for handle in handles]
+    handles = split_handles(handles)
     
     if handles is None or len(handles) == 0 or len(handles) > 100:
         raise Exception(f'bad handles : len(handles) = {None if handles is None else len(handles)}')
@@ -232,8 +276,7 @@ def preprocess_handles(handles):
 
     return handles
 
-def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
-
+def query_handles_contest(handles, page = 1, concerned = None):
     with dict_lock:
         logging.info('start query')
         handles = preprocess_handles(handles)
@@ -245,23 +288,25 @@ def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
         is_new_to_submission = concerned not in submissions_last_upd
 
     too_many_msg = None
+    '''
     if is_new_to_submission:
         logging.info('new handle')
         status, result  = update_handle_submissions(concerned)
         if status != 'OK':
             raise Exception(result)
     else:
-        try:
-            if concerned not in submissions_last_request or (
-                concerned not in submissions_last_upd or
-                submissions_last_request[concerned] < submissions_last_upd[concerned]
-            ): # not in queue
-                job_queue.put((time.time(), SUB, concerned), True, INTERVAL)
-            else:
-                logging.info('in queue, skipped')
-        except Exception as e:
-            logging.info(e)
-            too_many_msg = True
+    '''
+    try:
+        if concerned not in submissions_last_request or (
+            concerned not in submissions_last_upd or
+            submissions_last_request[concerned] < submissions_last_upd[concerned]
+        ): # not in queue
+            job_queue.put((time.time(), SUB, concerned), True, INTERVAL)
+        else:
+            logging.info('in queue, skipped')
+    except Exception as e:
+        logging.info(e)
+        too_many_msg = True
     
     with dict_lock:
 
@@ -272,16 +317,24 @@ def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
 
         for handle in handles:
             rendered_handles[handle] = render_rated_handle(handle, handle_dict[handle].get('rank', ''))
+        
+        total = len(contest_dict)
+        max_page = (total + 99) // 100
+        page = min(page, max_page)
+        page = max(page, 1)
+        from_ = (page - 1) * 100 + 1
+        to = from_ + 99
+        from_ = max(from_, 1)
+        to = min(to, total)
 
-        contests = list(contest_dict.values())
-        contests = sorted(contests, key=lambda x:x['startTimeSeconds'], reverse=True)[from_-1:from_-1+to]
+        contests = list(contest_dict.values())[from_-1:to]
 
         contest_concerned_submissions = {}
         contest_duration = {}
         for contest in contests:
             contest_concerned_submissions[contest['id']] = {}
             contest_duration[contest['id']] = contest['durationSeconds']
-        
+        NO, REJ, UP, AC = 0, 1, 2, 3
         concerned_verdicts = ['no', 'rejected', 'accepted-upsolve', 'accepted']
 
         concerned_submissions_list = submissions_dict.get(concerned, list())
@@ -294,28 +347,29 @@ def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
                 continue # e.g. running
             contest_id = submission['contestId']
             verdict = submission['verdict']
+            Type = submission['author']['participantType']
+            contested = Type != 'OUT_OF_COMPETITION' and Type != 'MANAGER'
             if contest_id in contest_concerned_submissions:
-                value = 0
-                if verdict == 'OK' and submission['relativeTimeSeconds'] <= contest_duration[contest_id]:
-                    value = 3
-                elif verdict == 'OK':
-                    value = 2
+                value = NO
+                if verdict == 'OK':
+                    value = AC if contested else UP
                 elif verdict != 'COMPILATION_ERROR':
-                    value = 1
+                    value = REJ
                 # If it is, append the submission to the list of submissions for that contest
-                old_value = contest_concerned_submissions[contest_id].get(submission['problem']['index'], 0)
+                old_value = contest_concerned_submissions[contest_id].get(submission['problem']['index'], NO)
                 if old_value < value:
                     contest_concerned_submissions[contest_id][submission['problem']['index']] = value
 
         for contest in contests:
             standings = []
 
-            concerned_submissions = contest_concerned_submissions[contest['id']]
+            contest_id = contest['id']
+            concerned_submissions = contest_concerned_submissions[contest_id]
             for p in contest['problems']:
-                p['concerned'] = concerned_verdicts[concerned_submissions.get(p['index'], 0)]
-            
+                p['concerned'] = concerned_submissions.get(p['index'], NO)
             for row in contest['rows']:
                 party_members = [m['handle'] for m in row['party']['members']]
+                participant_type = row['party']['participantType']
                 is_watched = False
                 is_concerned = False
                 for member in party_members:
@@ -325,16 +379,22 @@ def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
                     elif member in handles:
                         is_watched = True
                 if is_watched:
-                    rendered_members = [render_rated_handle(member,
-                        handle_dict[member].get('rank', '')) for member in party_members]
+                    rendered_members = render_handles(party_members)
                     problem_results = []
                     for p, problem in zip(contest['problems'], row['problemResults']):
                         rejected = problem['rejectedAttemptCount']
                         if problem['points'] > 0:
-                            state = 'accepted'
+                            if is_concerned:
+                                p['concerned'] = max(p['concerned'], AC if participant_type == 'CONTESTANT' else UP) 
+                            state = 'y'
                             show = '+'
                         else:
-                            state = 'rejected' if rejected > 0 else 'no'
+                            if rejected > 0:
+                                if is_concerned:
+                                    p['concerned'] = max(p['concerned'], REJ) 
+                                state = 'n'
+                            else:
+                                state = '0'
                             show = '-'
                         if rejected > 0:
                             show += str(rejected)
@@ -351,13 +411,13 @@ def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
             ac, rj, no = 0, 0, 0
             for p in contest['problems']:
                 x = p['concerned']
-                if x == 'rejected':
+                if x == REJ:
                     rj += 1
-                elif x == 'no':
+                elif x == NO:
                     no += 1
                 else:
                     ac += 1
-            if rj + no == 0:
+            if rj + no == 0 and ac > 0:
                 concerned_status = 'AK'
             elif ac > 0:
                 concerned_status = 'OPEN'
@@ -369,14 +429,19 @@ def query_handles_contest(handles, from_ = 1, to = 100, concerned = None):
                 'id' : contest['id'],
                 'problems' : contest['problems'],
                 'standings' : standings,
-                'concerned_status': concerned_status}
+                'concerned_status': concerned_status,
+                'result_time': parse_time(contest['result_time']) if 'result_time' in contest else None}
             contest_list.append(contest_return_dict)
         return {'concerned': concerned,
         'contests': contest_list,
+        'contest_from' : from_,
+        'contest_to' : to,
+        'contest_total' : total,
+        'pages': gen_page(page, max_page),
+        'ids': ','.join(handles),
         'rendered_handles': rendered_handles,
-        'new_handles' : [], # deprecated
         'last_upd_msg' : last_upd_msg,
-        'recent_submissions' : concerned_submissions_list[:40],
+        'recent_submissions' : concerned_submissions_list[:100],
         'recent_submissions_last_upd' : concerned_submissions_last_upd,
         'too_many_msg': too_many_msg,
         'submissions_updating': should_update_handle_submissions(concerned)}
@@ -391,15 +456,15 @@ def check_recent_submissions(handle, stamp):
         return 'OK', {
         'concerned' : handle,
         'rendered_handles': {handle: render_rated_handle(handle, handle_dict[handle].get('rank', ''))},
-        'recent_submissions' : submissions_dict.get(handle, list())[:40],
-        'recent_submissions_last_upd' : submissions_last_upd.get(handle, 'None')
+        'recent_submissions' : submissions_dict.get(handle, list())[:100],
+        'recent_submissions_last_upd' : submissions_last_upd.get(handle, None)
         }
 
 def render_handles(handles):
     ret = []
     for h in handles:
-        ret.append(render_rated_handle(h, handle_dict[h].get('rank', '')))
-    return ','.join(ret)
+        ret.append(render_rated_handle(h, handle_dict.get(h, dict()).get('rank', '')))
+    return ret
 
 def dump_all_handles():
     return render_handles(handle_dict.keys())

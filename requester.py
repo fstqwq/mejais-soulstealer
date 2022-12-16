@@ -2,8 +2,13 @@ import requests
 import logging
 
 def request_general(url, params):
-    response = requests.get(url, params=params)
+    try:
+        response = requests.get(url, params=params)
+    except Exception as e:
+        return 'FAILED', str(e)
     if response.status_code != 200:
+        logging.warning(url)
+        logging.warning(params)
         logging.warning('HTTP' + str(response.status_code))
         return 'HTTP', str(response.status_code)
     try:
@@ -51,7 +56,7 @@ def request_contest_standings(contestId, from_=1, count=1000, handles=None, show
 
     return request_general(url, params)
 
-def request_user_status(handle, from_=1, count=20000):
+def request_user_status(handle, from_=1, count=15000):
     url = 'https://codeforces.com/api/user.status'
     params = {
         'handle': handle,

@@ -15,18 +15,20 @@ function sendAjaxRequest() {
       if (response.status === 'OK') {
         // Append the result to the recent-submission element
         $('#recent-submissions').html(response.result);
-      } else if (response.status != 'FAILED') {
-        // If the status is not OK or FAILED, try again in 2 seconds
-        setTimeout(function() {
-          $.ajax(settings);  // use the stored AJAX settings
-        }, 2000);
       } else {
-        // If the status is FAILED, show an error message
-        $('#sub-updating').html('<i class="fa fa-chain-broken"></i>')
+        var retries = settings.retries || 0;
+        if (response.status != 'FAILED' && retries < 4) {
+          settings.retries = retries + 1;
+          setTimeout(function() {
+            $.ajax(settings);  // use the stored AJAX settings
+          }, 1500 * settings.retries); 
+        } else {
+          // error message
+          $('#sub-updating').html('<i class="fa fa-chain-broken"></i>');
+        }
       }
     },
     error: function() {
-      // This function is called if the request fails
       $('#sub-updating').html('<i class="fa fa-chain-broken"></i>')
     }
   };
@@ -35,5 +37,5 @@ function sendAjaxRequest() {
   $.ajax(settings);
 };
 if ($('#sub-updating').length > 0) {
-  sendAjaxRequest();
+  setTimeout(sendAjaxRequest, 3500);
 }
