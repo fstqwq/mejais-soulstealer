@@ -109,7 +109,7 @@ def update_contest(contest_id):
             global last_upd_msg
             last_upd_msg = f'Contest {contest["id"]} ({contest["name"]}) : {datetime.now().strftime("%B %d %Y %I:%M:%S %p")}, with last handle {handles[-1]}'
             logging.info(f'success : count = {len(result["rows"])} ' + last_upd_msg)
-        db_commit(CONTEST)
+        # db_commit(CONTEST)
 
 def update_contest_list():
     status, contests = request_contest_list ()

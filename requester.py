@@ -14,7 +14,7 @@ def request_general(url, params):
     try:
         response_data = response.json()
     except:
-        raise Exception('JSON decode failed. Maybe CodeForces is unavailable.')
+        return 'FAILED', 'JSON decode failed. Maybe CodeForces is unavailable.'
     status = response_data['status']
     
     if status != 'OK':
