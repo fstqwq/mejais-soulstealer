@@ -79,6 +79,7 @@ def parse_verdict(submission):
         verdict = 'FL'
     elif verdict == 'OK':
         verdict = 'AC'
+        tests = '&nbsp&nbsp&nbsp'
     elif verdict == 'WRONG_ANSWER':
         verdict = 'WA'
     elif 'ERROR' in verdict:
@@ -88,11 +89,13 @@ def parse_verdict(submission):
     elif verdict == 'TESTING':
         verdict = 'WJ'
     elif verdict == 'CHALLENGED':
-        verdict = 'Hacked'
+        verdict = 'HA'
+    elif verdict == 'PARTIAL':
+        verdict = f"{submission['points']:2.0f}"
+        tests = '&nbsp&nbsp&nbsp'
     else:
         verdict = " ".join(verdict.split()).title() 
-    return f'<span class="mono {class_type}">{verdict}</span> <span class="mono supsub"><span class="superscript">{parse_time(submission["creationTimeSeconds"])[:-3]}</span> <span class="subscript"><span class="{class_type}">{tests}</span> <span>{shorten_language(submission["programmingLanguage"])[:11]}</span></span></span>'
-    # <span class="mono" style="user-select: none;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+    return f'<span class="mono {class_type}">{verdict}</span><span class="mono supsub"><span class="superscript">{parse_time(submission["creationTimeSeconds"])[:-3]}</span> <span class="subscript"><span class="{class_type}">{tests}</span> <span>{shorten_language(submission["programmingLanguage"])[:11]}</span></span></span>'
 
 def parse_submission_link(submission):
   if 'contestId' in submission and submission['contestId'] < 100000:
@@ -177,8 +180,10 @@ def split_handles(handles):
 def gen_page(cur_page: int, max_page: int):
     ret = []
     if cur_page != 1:
+        ret.append(['<<', 1, 0])
         ret.append(['<', cur_page - 1, 0])
     else:
+        ret.append(['<<', 1, -1])
         ret.append(['<', cur_page - 1, -1])  # -1 for disabled
     if max_page < 5:
         for i in range(1, max_page + 1):
@@ -207,6 +212,8 @@ def gen_page(cur_page: int, max_page: int):
                     ret.append([str(i), i, 1])
     if cur_page < max_page:
         ret.append(['>', cur_page + 1, 0])
+        ret.append(['>>', max_page, 0])
     else:
         ret.append(['>', cur_page + 1, -1])
+        ret.append(['>>', max_page, -1])
     return ret

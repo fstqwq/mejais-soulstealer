@@ -58,6 +58,17 @@ def add():
     else:
         return render_template('index.html', data={'warning_info' : 'FAILED ' + str(id)})
 
+@app.route('/commit', methods=['GET'])
+def call_db_commit():
+    key = request.args['key'] 
+    if key == SECRET_KEY:
+        with dict_lock:
+            db_commit()
+        return 'success'
+    else:
+        time.sleep(1)
+        return 'wrong password'
+
 @app.route('/show', methods=['GET'])
 def show():
     try:

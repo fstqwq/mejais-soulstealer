@@ -16,7 +16,7 @@
 
     <div class="accordion" id="accordionExample" data-accordion-auto-fold="false">
      {% for contest in data.contests %}
-     <div class="card">
+     <div class="card border-0" style="border-radius: 0;">
       <div class="contest-holder">
        {% set filtered_name = contest.name | shorten_cf_round_names %}
        <table class="fixed" style="width: {{ [30.7 + (contest.problems | length) * 6.93, 100] | min }}%;"><tr>
@@ -49,11 +49,11 @@
            line.type == 'CONTESTANT' else (line.rank | string) +
            ("<sup>#</sup>" | safe) if (line.type == 'VIRTUAL' or
            line.type == 'OUT_OF_COMPETITION') else "*" }}</span></td>
-         <td class="card-name"><span>{{ ','.join(line.members) | safe}}</span>{%
+         <td class="card-name{% if line.is_party %} party-name{% endif %}"><span>{{ ','.join(line.members) | safe}}</span>{%
            if line.type != 'CONTESTANT'
           %}<span
            class="participant{{line.type}} participant_notation"><sub> {{line.type}}</sub></span>{% endif %}</td>
-         <td class="width-5-35 participant{{line.type}}"><span class="pts">{{ line.points | int }}</span></td>
+         <td class="width-5-35 participant{{line.type}}"><span class="pts">{{ line.points | int }}{% if line.penalty and line.type != 'PRACTICE' %}<sub>{{line.penalty}}</sub>{% endif %}</span></td>
          {% for problem in line.problem_results %}<td class="s{{problem[0]}}"{% if (contest.problems | length) > 10 %} style="width: {{69.3 / (contest.problems | length)}}%"{% endif %}>{{problem[1]}}</td>{% endfor %}
         </tr>
         </table>

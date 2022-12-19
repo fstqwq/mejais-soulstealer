@@ -48,7 +48,7 @@ def initialize_db():
     db_read()
     logging.info(last_upd_msg)
 
-user_standing_worker_threshold = time.time()
+user_standing_worker_threshold = time.time() - 60 * 60
 
 def update_users(input_handles=None):
     status, users = request_user_info(input_handles)
@@ -98,10 +98,13 @@ def update_contest(contest_id):
         if status != 'OK':
             logging.info(f'{status} : {result}')
             if 'disabled_until' in contest:
-                contest['disabled_until'] = time.time() + 5 * 60
+                count = contest['disabled_until'][0] + 1
+                contest['disabled_until'] = (count, time.time() + (count ** 2) * 5 * 60)
             else:
-                contest['disabled_until'] = time.time() + 60 * 60
+                contest['disabled_until'] = (0, time.time() + 5 * 60)
         else:
+            if 'disabled_until' in contest:
+                contest.pop('disabled_until')
             contest['rows'] = result['rows']
             contest['problems'] = result['problems']
             contest['result_time'] = time.time()
@@ -247,18 +250,22 @@ def worker_part_time():
         
         current_time = time.time()
         if current_time - last_upd_contest_list > CONTEST_LIST_THRESHOLD:
-            job_queue.put((time.time(), CONTEST_LIST, None))
+            try:
+                job_queue.put_nowait((time.time(), CONTEST_LIST, None))
+            except:
+                logging.warning('the queue is filled in just a second. how could it be possible?')
         else:
             with dict_lock:
                 found = False
                 for contest in contest_dict.values():
                     if 'result_time' not in contest or contest['result_time'] < user_standing_worker_threshold:
-                        if 'disabled_until' not in contest or contest['disabled_until'] < time.time():
+                        if 'disabled_until' not in contest or contest['disabled_until'][1] < time.time():
                             found = True
                             job_queue.put((time.time(), CONTEST, contest['id'])) 
                             break
                 if not found:
                     user_standing_worker_threshold = time.time()
+                    db_commit()
 
 
 
@@ -348,7 +355,7 @@ def query_handles_contest(handles, page = 1, concerned = None):
             contest_id = submission['contestId']
             verdict = submission['verdict']
             Type = submission['author']['participantType']
-            contested = Type != 'OUT_OF_COMPETITION' and Type != 'MANAGER'
+            contested = Type != 'MANAGER' and Type != 'PRACTICE'
             if contest_id in contest_concerned_submissions:
                 value = NO
                 if verdict == 'OK':
@@ -385,7 +392,7 @@ def query_handles_contest(handles, page = 1, concerned = None):
                         rejected = problem['rejectedAttemptCount']
                         if problem['points'] > 0:
                             if is_concerned:
-                                p['concerned'] = max(p['concerned'], AC if participant_type == 'CONTESTANT' else UP) 
+                                p['concerned'] = max(p['concerned'], AC if participant_type != 'MANAGER' and participant_type != 'PRACTICE' else UP) 
                             state = 'y'
                             show = '+'
                         else:
@@ -406,6 +413,10 @@ def query_handles_contest(handles, page = 1, concerned = None):
                         'type': row['party']['participantType'],
                         'problem_results': problem_results,
                         'is_concerned': is_concerned}
+                    if 'penalty' in row:
+                        row_dict['penalty'] = row['penalty']
+                    if len(party_members) > 1:
+                        row_dict['is_party'] = True
                     standings.append(row_dict)
             
             ac, rj, no = 0, 0, 0

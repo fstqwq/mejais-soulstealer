@@ -103,7 +103,6 @@
 }
 .card-contest-name {
   width: 25%;
-  overflow: hidden;
 }
 .rank, .pts {
   font-family: var(--font-family-sans-serif);
@@ -223,6 +222,10 @@
   white-space: nowrap;
   overflow: hidden;
 }
+.party-name {
+  font-size: small;
+  white-space:break-spaces;
+}
 .handle {
   margin: auto;
 }
@@ -236,28 +239,27 @@ a {
   font-family: var(--font-family-sans-serif);
   text-decoration:none!important;
 }
-.td-problem {
+.td-verdict, .td-problem {
   vertical-align: middle !important;
   padding: 4px !important;
-  vertical-align: center;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
   font-size: 16px;
 }
-
 .td-verdict {
-  width: 8.5rem;
+  text-align: right;
 }
 .mono {
   font-family: var(--font-family-monospace);
 }
 .supsub {
-  position: absolute;
-  font-size: 12px;
+  position: relative;
+  display: inline-block;
+  line-height: 9px;
+  font-size: 14px;
 }
-.superscript {font-weight: normal; display:block; position:relative; left:.1rem; top: -.3rem}
-.subscript {display:block; position:relative; left:.1rem; top: -.5rem}
+.superscript {font-weight: normal; display:block; position:relative; left:.1rem; top: 0px}
+.subscript {display:block; position:relative; left:.1rem; top: 5px; text-align: left;}
 /*
 @media screen and (max-width: 1180px) {
   .td-verdict {
